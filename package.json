@@ -5,14 +5,15 @@
   "main": "server.js",
   "scripts": {
     "build": "docker build -t chagatai/node-web-app .",
-    "startd": "docker run -p 49160:8080 -d chagatai/node-web-app",
-    "open": "open http://localhost:49160",
+    "startd": "docker run -p 8080:8080 -d chagatai/node-web-app",
+    "open": "open http://localhost:8080",
     "go": "npm run build && npm run startd && docker ps"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@hapi/hapi": "^21.3.2",
+    "busboy": "^1.6.0",
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "fluent-ffmpeg": "^2.1.2",
