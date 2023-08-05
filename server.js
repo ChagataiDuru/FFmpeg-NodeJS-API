@@ -4,8 +4,8 @@ const Vision = require('@hapi/vision');
 const Inert = require('@hapi/inert');
 const Path = require('path');
 const fs = require('fs');
-const Busboy = require('busboy');
 const ffmpeg = require('fluent-ffmpeg');
+const http = require('http');
 
 const server = new Hapi.Server({
     port: 8080,
@@ -13,8 +13,10 @@ const server = new Hapi.Server({
     routes: {
         payload: {
             output: 'stream',
-            parse: false,
-            allow: ['multipart/form-data', 'application/octet-stream', 'video/mp4', 'video/quicktime'],
+            multipart: true,
+            timeout: false,
+            parse: true,
+            allow: ['application/json', 'multipart/form-data', 'video/mp4', 'image/jpeg', 'application/pdf', 'application/x-www-form-urlencoded'],
             maxBytes: 52428800 // 50MB
         }
     }
@@ -32,37 +34,26 @@ server.route({
     method: 'POST',
     path: '/upload',
     handler: function (request, reply) {
-        console.log('Uploading file');
-        const busboy = Busboy({ headers: request.headers });
-        const fileData = {};
-        busboy.on('file', function(fieldname, file, filename, encoding, mimetype) {
-            console.log('File [' + fieldname + ']: filename: ' + filename + ', encoding: ' + encoding + ', mimetype: ' + mimetype);
-            const saveTo = Path.join(__dirname, 'uploads', filename);
-            file.pipe(fs.createWriteStream(saveTo));
-            fileData.path = saveTo;
-            fileData.type = mimetype;
-            console.log('File saved to: ' + saveTo);
-        });
-        busboy.on('finish', function() {
-            console.log('Done parsing form!');
-            reply(JSON.stringify(fileData));
-            const filePath = fileData.path;
-            const fileType = fileData.type.split('/')[1];
-            const fileName = Path.basename(filePath, Path.extname(filePath));
-            const convertedFilePath = Path.join(__dirname, 'converted', `${fileName}.${fileType}`);
-            ffmpeg(filePath)
-                .toFormat(fileType)
-                .on('end', function() {
-                    console.log('File converted successfully');
-                })
-                .on('error', function(err) {
-                    console.log('An error occurred: ' + err.message);
-                })
-                .save(convertedFilePath);
-            console.log('File converted to: ' + convertedFilePath);
-        });
-        require('request')(request).pipe(busboy);
+        let data = request.payload;
+        const filename = data.file.hapi.filename
+        console.log(filename)
+        fs.writeFile('./uploads/' + filename, data.file._data, err => {
+            if (err) {
+              console.error(err)
+            }
+            console.log('File saved')
+        })
+        return reply.file('public/index.html');
     },
+    config: {
+        payload: {
+            output: "stream",
+            parse: true,
+            allow: "multipart/form-data",
+            multipart: { output: 'stream' },
+            maxBytes: 50 * 1000 * 1000 //50MB
+        },
+    }
 });
 
 server.route({

@@ -1,11 +1,11 @@
 {
-  "name": "hapi-socketio-redis-chat",
+  "name": "hapi-ffmpeg-microservice",
   "version": "1.0.0",
-  "description": "Hapi-SocketIO-Redis-Chat",
+  "description": "Hapi-ffmpeg-microservice",
   "main": "server.js",
   "scripts": {
     "build": "docker build -t chagatai/node-web-app .",
-    "startd": "docker run -p 8080:8080 -d chagatai/node-web-app",
+    "startd": "docker run -dp 8080:8080 chagatai/node-web-app",
     "open": "open http://localhost:8080",
     "go": "npm run build && npm run startd && docker ps"
   },
