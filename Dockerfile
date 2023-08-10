@@ -1,6 +1,6 @@
-FROM node:18
+FROM node:alpine
+RUN apk add  --no-cache ffmpeg
 VOLUME ["/root"]
-ADD ffmpeg-setup.sh /root
 WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm install

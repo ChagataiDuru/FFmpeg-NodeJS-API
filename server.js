@@ -5,7 +5,7 @@ const Inert = require('@hapi/inert');
 const Path = require('path');
 const fs = require('fs');
 const ffmpeg = require('fluent-ffmpeg');
-const http = require('http');
+const { Readable } = require('stream');
 
 const server = new Hapi.Server({
     port: 8080,
@@ -43,7 +43,30 @@ server.route({
             }
             console.log('File saved')
         })
-        return reply.file('public/index.html');
+        ffmpeg('./uploads/' + filename)
+        .toFormat(data.type)
+        .on('error', function(err, stdout, stderr) {
+            console.log('An error occurred: ' + err.message);
+        }
+        )
+        .on('progress', function(progress) {
+            console.log('Processing: ' + progress.percent + '% done');
+        }
+        )
+        .on('end', function() {
+            console.log('Processing finished !');
+            console.log(`${filename.split('.')[0]}.${data.type}`)
+        }
+        )
+        .save('./converted/' + `${filename.split('.')[0]}.${data.type}`)
+        .pipe(reply.response(), { end: true });
+
+        return reply.file('./converted/' + `${filename.split('.')[0]}.${data.type}`
+        ).type(data.type)
+        .header('Content-Disposition', `attachment; filename=${filename.split('.')[0]}.${data.type}`)
+        .header('Content-Type', data.type == 'mp3' ? 'audio/mpeg' : 'video/mp4')
+        .header('Content-Length', data.file._data.length);
+
     },
     config: {
         payload: {
